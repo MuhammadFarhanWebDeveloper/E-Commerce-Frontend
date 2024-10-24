@@ -6,7 +6,7 @@ import { useState } from "react";
 
 const LoginForm = () => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,9 +26,9 @@ const LoginForm = () => {
     e.preventDefault();
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const request = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`,
+        `/api/login`,
         {
           method: "POST",
           headers: {
@@ -39,8 +39,9 @@ const LoginForm = () => {
         }
       );
       const response = await request.json();
-      console.log(response);
+
       if (response.success) {
+        router.refresh()
         return router.push("/");
       } else {
         setError(response.message || "Login failed");
@@ -48,8 +49,8 @@ const LoginForm = () => {
     } catch (error) {
       console.log(error);
       setError("Sorry, something went wrong.");
-    }finally{
-      setIsLoading(false)
+    } finally {
+      setIsLoading(false);
     }
 
     setError(""); // Clear the error if form submission is successful
