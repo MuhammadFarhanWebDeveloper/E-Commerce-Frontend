@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 export async function POST(request) {
   const formData = await request.json();
 
-  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`,
     {
@@ -11,33 +10,35 @@ export async function POST(request) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(formData), 
+      body: JSON.stringify(formData),
     }
   );
 
-  
   if (!res.ok) {
-    return Response.json({ error: "Login failed" }, { status: res.status });
+    return Response.json({success:false,  error: "Login failed" }, { status: res.status });
   }
 
-  
   const data = await res.json();
 
-  
-  const authToken = res.headers.get("set-cookie");
-  console.log(authToken)
+ 
+  const setCookieHeader = res.headers.get("set-cookie");
 
-  if (authToken) {
+  
+  if (setCookieHeader) {
+    
+    const authToken = setCookieHeader.split(";")[0].split("=")[1];
+
     
     const cookieStore = cookies();
     cookieStore.set("authtoken", authToken, {
-      httpOnly: true,  
+      httpOnly: true, 
       sameSite: "strict", 
       secure: process.env.NODE_ENV === "production", 
       path: "/", 
+      maxAge: 30 * 24 * 60 * 60, 
     });
   }
 
   
-  return Response.json({ data });
+  return Response.json({ success:true, data });
 }

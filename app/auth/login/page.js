@@ -41,7 +41,7 @@ const LoginForm = () => {
       const response = await request.json();
 
       if (response.success) {
-        router.refresh()
+        // router.refresh()
         return router.push("/");
       } else {
         setError(response.message || "Login failed");
