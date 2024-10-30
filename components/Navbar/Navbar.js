@@ -1,7 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "nextjs-toploader/app";
+import { useRouter } from "next/navigation";
 import CircularImage from "../General/CircularImage";
 import {
   AiOutlineHome,
@@ -11,14 +11,27 @@ import {
 } from "react-icons/ai";
 import { GoPencil } from "react-icons/go";
 import UpdateUserModal from "../UpdateUserModal";
+import { useDispatch, useSelector } from "react-redux";
+import { addUser } from "@/lib/redux/slices/user";
 
-function Navbar({ user }) {
+function Navbar({ user: providedUser }) {
   const [isSearchBarOpened, setIsSearchBarOpened] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpened, setIsMenuOpened] = useState(false);
   const [isUserUpdateModalOpened, setIsUserUpdateModalOpened] = useState(false);
   const [userControlMenuOpened, setUserControlMenuOpened] = useState(false);
-  const router = useRouter(); // Get router instance
+
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+  const user = useSelector((state) => state.user.user) || providedUser;
+
+  // Only dispatch addUser after the component mounts on the client
+  useEffect(() => {
+    if (providedUser) {
+      dispatch(addUser(providedUser));
+    }
+  }, [dispatch]);
 
   const toggleUserUpdateModal = () => {
     setIsUserUpdateModalOpened(!isUserUpdateModalOpened);
@@ -27,45 +40,39 @@ function Navbar({ user }) {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setIsSearchBarOpened(false);
-
     if (searchQuery.trim()) {
       router.push(`/products?search=${searchQuery}`);
     }
-
     setSearchQuery("");
   };
 
   return (
     <div className="fixed top-0 bg-slate-300 z-20 w-full px-5">
+      {/* User Update Modal */}
       {isUserUpdateModalOpened && (
         <UpdateUserModal user={user} close={toggleUserUpdateModal} />
       )}
       <div className="w-full h-[70px] flex items-center justify-between">
         {/* Logo */}
-        <div className="">
-          <Link
-            href={"/"}
-            className="text-3xl text-center font-bold text-rose-800"
-          >
+        <div>
+          <Link href="/" className="text-3xl font-bold text-rose-800">
             Logo
           </Link>
         </div>
+
         {/* Search Bar */}
         <div
-          className={`md:w-[30%] md:static bg-slate-300 md:h-full absolute -bottom-14 left-0 right-0 ${
-            !isSearchBarOpened && "hidden"
-          } md:block`}
+          className={`md:w-[30%] bg-slate-300 md:h-full ${
+            isSearchBarOpened ? "block" : "hidden md:block"
+          }`}
         >
-          <form
-            onSubmit={handleSearchSubmit}
-            className="flex gap-3 items-center justify-center p-3"
-          >
+          <form onSubmit={handleSearchSubmit} className="flex gap-3 p-3 items-center">
             <input
               type="search"
-              value={searchQuery} // Bind input value to state
-              onChange={(e) => setSearchQuery(e.target.value)} // Update state on input change
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search Products"
-              className="w-full p-2 px-4 outline-none border-none rounded-full bg-gray-100 focus:bg-white focus:ring-2 focus:ring-rose-500 transition-all duration-300"
+              className="w-full p-2 rounded-full bg-gray-100 focus:bg-white focus:ring-2 focus:ring-rose-500 transition-all duration-300"
             />
             <button
               type="submit"
@@ -76,114 +83,85 @@ function Navbar({ user }) {
           </form>
         </div>
 
-        {/* Search Icon (appears in small screens) */}
+        {/* Search Icon (Small Screens) */}
         <div
-          onClick={() => {
-            setIsSearchBarOpened(true);
-          }}
-          className={`p-1 md:hidden ${
-            !isSearchBarOpened && "block"
-          } rounded-full cursor-pointer bg-slate-400`}
+          onClick={() => setIsSearchBarOpened(!isSearchBarOpened)}
+          className="p-1 md:hidden rounded-full bg-slate-400 cursor-pointer"
         >
           <AiOutlineSearch size={25} />
         </div>
 
-        {/*Hamburger (appears in small screens)  */}
+        {/* Hamburger Menu Icon (Small Screens) */}
         {!user?.isSeller && (
           <div
             onClick={() => setIsMenuOpened(!isMenuOpened)}
-            className="p-1 cursor-pointer border border-black rounded-full md:hidden block"
+            className="p-1 border border-black rounded-full md:hidden cursor-pointer"
           >
             <ul>
-              <li className="w-[24px] my-[3px] h-[3px] bg-black"></li>
-              <li className="w-[24px] my-[3px] h-[3px] bg-black"></li>
-              <li className="w-[24px] my-[3px] h-[3px] bg-black"></li>
+              <li className="w-6 h-0.5 bg-black my-1"></li>
+              <li className="w-6 h-0.5 bg-black my-1"></li>
+              <li className="w-6 h-0.5 bg-black my-1"></li>
             </ul>
           </div>
         )}
 
-        {/* Links  */}
+        {/* Menu Links */}
         <div
-          className={`flex items-center md:gap-4 gap-3  md:flex-row flex-col md:static absolute bg-slate-300 left-0 right-0 top-16 ${
-            !isMenuOpened && "hidden md:flex"
+          className={`flex items-center md:flex-row flex-col md:static absolute bg-slate-300 left-0 right-0 top-16 ${
+            isMenuOpened ? "block" : "hidden md:flex"
           }`}
         >
-          {user && !user?.isSeller && (
-            <Link href="/auth/become-seller" className="w-fit text-lg font-semibold navlink relative cursor-pointer">
+          {!user?.isSeller && (
+            <Link href="/auth/become-seller" className="text-lg font-semibold">
               Become a seller
             </Link>
           )}
           {user?.isSeller && (
-            <div className="w-fit text-lg font-semibold navlink relative cursor-pointer">
-              <Link href={"/seller/dashboard"}>Dashboard</Link>
+            <Link href="/seller/dashboard" className="text-lg font-semibold">
+              Dashboard
+            </Link>
+          )}
+          {!providedUser && (
+            <div className="flex md:gap-4 gap-3 items-center mx-4 flex-col md:flex-row">
+              <Link href="/auth/login" className="w-fit">Login</Link>
+              <Link href="/auth/send-otp" className="w-fit">Sign Up</Link>
             </div>
           )}
-          <div className="flex items-center md:flex-row flex-col py-2 justify-center text-lg font-semibold">
-            {!user && (
-              <div
-                className={`items-center md:gap-4 gap-3 flex md:flex-row flex-col`}
-              >
-                <Link href={"/auth/login"} className="w-fit navlink relative cursor-pointer">
-                  Login
-                </Link>
-                <Link href={"/auth/send-otp"} className="w-fit navlink relative cursor-pointer">
-                  Sign Up
-                </Link>
-              </div>
-            )}
-          </div>
         </div>
 
-        {user && (
-          <>
-            {/* Shoping Cart Icon */}
+        {providedUser && (
+          <div className="flex items-center md:gap-4">
+            {/* Shopping Cart Icon */}
             <div className="relative">
-              <div className="absolute -top-3 -right-3 rounded-full w-[20px] h-[20px] p-1 text-sm  bg-red-700 flex items-center justify-center text-white">
+              <div className="absolute -top-3 -right-3 rounded-full w-5 h-5 bg-red-700 text-white flex items-center justify-center text-xs">
                 0
               </div>
               <AiOutlineShoppingCart size={30} />
             </div>
 
             {/* User Account Menu */}
-            <div className="relative px-3 flex md:gap-4 items-center">
+            <div className="relative px-3">
               <div
-                onClick={() => {
-                  setUserControlMenuOpened(!userControlMenuOpened);
-                }}
-                className="w-fit h-fit rounded-full cursor-pointer"
+                onClick={() => setUserControlMenuOpened(!userControlMenuOpened)}
+                className="cursor-pointer"
               >
                 <CircularImage
-                  imageUrl={user?.profilePicture || "/noavatar.png"}
+                  imageUrl={user?.profilePicture || providedUser?.profilePicture || "/noavatar.png"}
                   size={50}
                 />
               </div>
               {userControlMenuOpened && (
-                <ul
-                  onClick={() => {
-                    setUserControlMenuOpened(!userControlMenuOpened);
-                  }}
-                  className="absolute mt-1 rounded-lg w-[150px] gap-2 text-white z-20  right-0 top-12 bg-gray-600 px-2 min-h-[100px]"
-                >
-                  <li
-                    onClick={toggleUserUpdateModal}
-                    className="p-2 rounded-lg w-full flex gap-2 items-center cursor-pointer hover:bg-gray-500"
-                  >
-                    <div className="">
-                      <GoPencil />
-                    </div>
-                    <p className="w-full">Update Info</p>
+                <ul className="absolute right-0 top-12 bg-gray-600 text-white rounded-lg w-36 py-2 mt-2 z-20">
+                  <li onClick={toggleUserUpdateModal} className="p-2 flex items-center cursor-pointer hover:bg-gray-500">
+                    <GoPencil /> <span className="ml-2">Update Info</span>
                   </li>
-                  <hr />
-                  <li className="p-2 rounded-lg  flex gap-2 items-center cursor-pointer hover:bg-gray-500">
-                    <div className="">
-                      <AiOutlineLogout />
-                    </div>
-                    <p>Logout</p>
+                  <li className="p-2 flex items-center cursor-pointer hover:bg-gray-500">
+                    <AiOutlineLogout /> <span className="ml-2">Logout</span>
                   </li>
                 </ul>
               )}
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

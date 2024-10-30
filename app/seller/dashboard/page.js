@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 async function page() {
   const headersList = headers();
   const userHeader = headersList.get("user");
-  const user = JSON.parse(userHeader);
+  const user = JSON.parse(atob(userHeader));
+  console.log("In the dashboard")
   console.log(user);
   const { products } = await getProducts(
     1,

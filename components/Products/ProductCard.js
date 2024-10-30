@@ -11,6 +11,7 @@ function ProductCard({ product }) {
             src={product.images[0].url}
             width={1500}
             height={1000}
+            alt="Product Image"
             className="w-[1500px] h-[200px] object-cover rounded-lg"
           />
         </Link>

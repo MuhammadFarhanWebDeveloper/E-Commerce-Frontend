@@ -2,13 +2,19 @@
 import React, { useRef, useState } from "react";
 import { AiOutlineClose } from "react-icons/ai";
 import CircularImage from "./General/CircularImage";
-import { updateUser } from "@/lib/apiCalls/user";
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { addUser } from "@/lib/redux/slices/user";
 
 function UpdateUserModal({ close, user: userObject }) {
+  const router = useRouter();
+  const dispetch = useDispatch();
+
   const profilePictureRef = useRef();
   const [user, setUser] = useState(userObject);
   const [profilePicture, setProfilePicture] = useState("");
-
+  const [isLoading, setIsLoading] = useState(false);
+  
   const changeProfilePicture = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -17,17 +23,47 @@ function UpdateUserModal({ close, user: userObject }) {
     }
   };
 
+  const handleChangeInput = (e) => {
+    const { name, value } = e.target;
+    setUser({
+      ...user,
+      [name]: value,
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const updated = await updateUser(
-      user.firstName,
-      user.lastName,
-      user.bio,
-      user.address,
-      user.phoneNumber,
-      profilePicture
-    );
-    console.log(`The updated user is updated`);
+    setIsLoading(true);
+
+    const formData = new FormData();
+    formData.append("profilePicture", profilePicture); // Add profile picture
+    formData.append("firstName", user.firstName);
+    formData.append("lastName", user.lastName);
+    formData.append("bio", user.bio);
+    formData.append("address", user.address);
+    formData.append("phoneNumber", user.phoneNumber);
+
+    try {
+      const request = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-user`, {
+        method: "PUT",
+        body: formData,
+        credentials: "include",
+      });
+
+      const response = await request.json();
+
+      if (response.success) {
+        dispetch(addUser(response.user))
+        close();
+      } else {
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+
+    // setError("");
   };
 
   return (
@@ -87,6 +123,7 @@ function UpdateUserModal({ close, user: userObject }) {
                   name="firstName"
                   id="firstName"
                   value={user?.firstName || ""}
+                  onChange={handleChangeInput}
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                 />
               </div>
@@ -102,6 +139,7 @@ function UpdateUserModal({ close, user: userObject }) {
                   name="lastName"
                   id="lastName"
                   value={user?.lastName || ""}
+                  onChange={handleChangeInput}
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                 />
               </div>
@@ -117,6 +155,7 @@ function UpdateUserModal({ close, user: userObject }) {
                   name="phoneNumber"
                   id="phoneNumber"
                   value={user?.phoneNumber}
+                  onChange={handleChangeInput}
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                 />
               </div>
@@ -131,6 +170,7 @@ function UpdateUserModal({ close, user: userObject }) {
                   name="bio"
                   id="bio"
                   value={user?.bio || ""}
+                  onChange={handleChangeInput}
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                   placeholder=""
                 ></textarea>
@@ -146,6 +186,7 @@ function UpdateUserModal({ close, user: userObject }) {
                   name="address"
                   id="address"
                   value={user?.address || ""}
+                  onChange={handleChangeInput}
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                   placeholder=""
                 ></textarea>
@@ -155,9 +196,14 @@ function UpdateUserModal({ close, user: userObject }) {
             <div className="flex justify-center my-2 ">
               <button
                 type="submit"
-                className=" font-medium rounded-lg text-sm px-5 py-2.5 text-center text-black bg-gray-400"
+                className="w-full bg-indigo-600 text-white py-2 rounded-lg flex justify-center items-center hover:bg-indigo-700 transition duration-300"
+                disabled={isLoading}
               >
-                Update
+                {!isLoading ? (
+                  "Update"
+                ) : (
+                  <img src="/loading.gif" className="mx-auto" />
+                )}
               </button>
             </div>
           </form>

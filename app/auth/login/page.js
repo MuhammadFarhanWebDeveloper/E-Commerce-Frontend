@@ -41,7 +41,6 @@ const LoginForm = () => {
       const response = await request.json();
 
       if (response.success) {
-        // router.refresh()
         return router.push("/");
       } else {
         setError(response.message || "Login failed");
@@ -53,7 +52,7 @@ const LoginForm = () => {
       setIsLoading(false);
     }
 
-    setError(""); // Clear the error if form submission is successful
+    setError("");
   };
 
   return (

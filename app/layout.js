@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar/Navbar";
 import NextTopLoader from "nextjs-toploader";
 import { getUser } from "@/lib/apiCalls/user";
 import { cookies } from "next/headers";
+import StateWrapper from "./StateWrapper";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -24,7 +25,6 @@ export const metadata = {
 export default async function RootLayout({ children }) {
   const cookieStore = cookies();
 
-  // Retrieve a specific cookie by name
   const token = cookieStore.get("authtoken")?.value;
   let user;
   if (token) {
@@ -46,11 +46,13 @@ export default async function RootLayout({ children }) {
           delay={100} // Delay before loading bar appears
           transitionDuration={300} // Duration of the transition
         />
-        <header className="border ">
-          <Navbar user={user} />
-        </header>
-        <main className="py-32 md:py-24 ">{children}</main>
-        <footer></footer>
+        <StateWrapper>
+          <header className="border ">
+            <Navbar user={user} />
+          </header>
+          <main className="py-32 md:py-24 ">{children}</main>
+          <footer></footer>
+        </StateWrapper>
       </body>
     </html>
   );

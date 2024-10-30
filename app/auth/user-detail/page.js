@@ -35,7 +35,7 @@ const UserInfoForm = () => {
     try {
       setIsLoading(true)
       const request = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register`,
+        `/api/signup/register`,
         {
           method: "POST",
           headers: {

@@ -31,10 +31,9 @@ export async function POST(request) {
     
     const cookieStore = cookies();
     cookieStore.set("authtoken", authToken, {
-      httpOnly: true, 
-      sameSite: "strict", 
-      secure: process.env.NODE_ENV === "production", 
-      path: "/", 
+      sameSite: "none", 
+      secure:true,
+      path: "/",
       maxAge: 30 * 24 * 60 * 60, 
     });
   }
