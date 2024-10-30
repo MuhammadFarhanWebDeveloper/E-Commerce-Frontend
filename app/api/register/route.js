@@ -17,7 +17,7 @@ export async function POST(request) {
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register`,
     {
       method: "POST",
-      headers:headers,
+      headers: headers,
       body: JSON.stringify(formData),
     }
   );
@@ -38,9 +38,8 @@ export async function POST(request) {
 
     const cookieStore = cookies();
     cookieStore.set("authtoken", authToken, {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      secure: true,
       path: "/",
       maxAge: 30 * 24 * 60 * 60,
     });
