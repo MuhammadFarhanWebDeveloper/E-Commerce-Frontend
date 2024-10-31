@@ -3,6 +3,8 @@ import Link from "next/link";
 import React from "react";
 
 function ProductCard({ product }) {
+  console.log("The product")
+  console.log(product.images)
   return (
     <div className="p-2  w-full sm:w-1/2 md:w-1/3 lg:w-1/4">
       <div className="rounded-lg p-2 flex flex-col gap-3 border border-black min-h-[400px]">

@@ -1,12 +1,16 @@
 "use client";
 
-import { createProduct } from "@/lib/apiCalls/products";
+import { createProduct, editProduct } from "@/lib/apiCalls/products";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { AiOutlineClose, AiOutlineDelete } from "react-icons/ai";
 
-function ProductActionModal({ close, actualProduct = {}, type = "upload" }) {
+function ProductActionModal({
+  close,
+  product: actualProduct = {},
+  type = "upload",
+}) {
   const router = useRouter();
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [product, setProduct] = useState({
@@ -16,7 +20,7 @@ function ProductActionModal({ close, actualProduct = {}, type = "upload" }) {
     description: actualProduct.description || "",
     images: actualProduct.images || [],
   });
-
+  
   const changeFieldName = (e) => {
     const { name, value } = e.target;
     setProduct({
@@ -27,8 +31,15 @@ function ProductActionModal({ close, actualProduct = {}, type = "upload" }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(product);
-    const data = await createProduct({ ...product, images: selectedFiles });
+    let data;
+    if (type == "upload") {
+      data = await createProduct({ ...product, images: selectedFiles });
+    } else {
+      data = await editProduct(
+        { ...product, images: selectedFiles },
+        actualProduct?.id
+      );
+    }
     if (data.success) {
       router.refresh();
     }
@@ -174,7 +185,7 @@ function ProductActionModal({ close, actualProduct = {}, type = "upload" }) {
                       <AiOutlineDelete size={20} />
                     </div>
                     <Image
-                      src={image || "/images/call to action.png"}
+                      src={image.url || "/images/call to action.png"}
                       alt={`productImage`}
                       width={150}
                       height={150}
