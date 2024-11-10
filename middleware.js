@@ -11,10 +11,7 @@ export async function middleware(req) {
     // Create the default response
     const res = NextResponse.next();
 
-    if (user?.user) {
-      const encodedUser = Buffer.from(JSON.stringify(user.user)).toString("base64");
-      res.headers.set("user", encodedUser);
-    }
+
 
     // Handle /seller routes
     if (pathname.startsWith("/seller/dashboard")) {

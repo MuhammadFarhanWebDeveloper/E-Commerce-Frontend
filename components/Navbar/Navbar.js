@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import CircularImage from "../General/CircularImage";
 import {
   AiOutlineHome,
@@ -13,6 +13,9 @@ import { GoPencil } from "react-icons/go";
 import UpdateUserModal from "../UpdateUserModal";
 import { useDispatch, useSelector } from "react-redux";
 import Image from "next/image";
+import LogoutConfirmation from "../General/LogoutConfirmation";
+import { logout } from "@/lib/logoutAction";
+import { addUser } from "@/lib/redux/slices/user";
 
 function Navbar({ user: providedUser }) {
   const [isSearchBarOpened, setIsSearchBarOpened] = useState(false);
@@ -20,9 +23,16 @@ function Navbar({ user: providedUser }) {
   const [isMenuOpened, setIsMenuOpened] = useState(false);
   const [isUserUpdateModalOpened, setIsUserUpdateModalOpened] = useState(false);
   const [userControlMenuOpened, setUserControlMenuOpened] = useState(false);
+  const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
+    useState(false);
 
   const dispatch = useDispatch();
   const router = useRouter();
+  const handleLogout = async () => {
+    await logout();
+    dispatch(addUser(null));
+    router.push("/auth/login");
+  };
 
   const user = useSelector((state) => state.user.user);
   const toggleUserUpdateModal = () => {
@@ -39,6 +49,10 @@ function Navbar({ user: providedUser }) {
     setSearchQuery("");
   };
 
+  const toggleLogoutModal = (e) => {
+    setIsLogoutConfirmationOpened(!isLogoutConfirmationOpened);
+  };
+
   return (
     <div className="fixed top-0 bg-slate-300 z-20 w-full px-5">
       {isUserUpdateModalOpened && (
@@ -48,7 +62,13 @@ function Navbar({ user: providedUser }) {
         {/* Logo */}
         <div>
           <Link href="/" className="text-3xl font-bold text-rose-800">
-            <Image src={"/logo.png"} width={110} height={110} alt="Logo" className="" />
+            <Image
+              src={"/logo.png"}
+              width={110}
+              height={110}
+              alt="Logo"
+              className=""
+            />
           </Link>
         </div>
 
@@ -156,7 +176,16 @@ function Navbar({ user: providedUser }) {
                   >
                     <GoPencil /> <span className="ml-2">Update Info</span>
                   </li>
-                  <li className="p-2 flex items-center cursor-pointer hover:bg-gray-500">
+                  <li
+                    onClick={toggleLogoutModal}
+                    className="p-2 flex items-center cursor-pointer hover:bg-gray-500"
+                  >
+                    {isLogoutConfirmationOpened && (
+                      <LogoutConfirmation
+                        onCancel={toggleLogoutModal}
+                        onConfirm={handleLogout}
+                      />
+                    )}
                     <AiOutlineLogout /> <span className="ml-2">Logout</span>
                   </li>
                 </ul>

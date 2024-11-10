@@ -17,7 +17,7 @@ async function page({searchParams}) {
   
   return (
     <div>
-      <ProductsContainer products={products} />
+      <ProductsContainer products={products}heading=''  />
     </div>
   )
 }
