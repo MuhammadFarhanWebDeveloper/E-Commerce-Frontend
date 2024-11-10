@@ -1,27 +1,65 @@
 import { NextResponse } from "next/server";
 import { getUser } from "./lib/apiCalls/user";
-import { notFound } from "next/navigation";
 
 export async function middleware(req) {
+  const pathname = req.nextUrl.pathname;
+  const authtoken = req.cookies.get("authtoken")?.value;
+
   try {
-    if (req.nextUrl.pathname == "/seller/dashboard") {
-      const authtoken = req.cookies.get("authtoken")?.value;
-      const user = await getUser(authtoken);
-      if (!user?.user.isSeller) {
-        return notFound();
-      }
-      console.log("In the middleware");
-      console.log(user);
-      const res = NextResponse.next();
-      const encodedUser = Buffer.from(JSON.stringify(user.user)).toString(
-        "base64"
-      );
+    const user = authtoken ? await getUser(authtoken) : null;
+
+    // Create the default response
+    const res = NextResponse.next();
+
+    if (user?.user) {
+      const encodedUser = Buffer.from(JSON.stringify(user.user)).toString("base64");
       res.headers.set("user", encodedUser);
+    }
+
+    // Handle /seller routes
+    if (pathname.startsWith("/seller/dashboard")) {
+      if (!user?.user?.isSeller) {
+        console.log("user is not defined")
+        console.log(user)
+        return NextResponse.rewrite(new URL("/404", req.url));
+      }
       return res;
     }
 
-    return NextResponse.next();
+    // Handle /auth routes
+    if (pathname.startsWith("/auth")) {
+      const isBecomeSeller = pathname.startsWith("/auth/become-seller");
+      const isPasswordReset =
+        pathname.startsWith("/auth/forgot-password") ||
+        pathname.startsWith("/auth/reset-password");
+
+      if (user?.user) {
+        // Allow become-seller for logged-in non-sellers
+        if (isBecomeSeller && !user.user.isSeller) {
+          return res;
+        }
+        // Allow password reset routes
+        if (isPasswordReset) {
+          return res;
+        }
+        // Redirect other auth routes for logged-in users
+        return NextResponse.rewrite(new URL("/404", req.url));
+      } else {
+        if (isBecomeSeller) {
+          return NextResponse.rewrite(new URL("/404", req.url));
+        }
+        return res;
+      }
+    }
+
+    // Default response for non-matching routes
+    return res;
   } catch (error) {
-    console.log("JWT Verification Error:", error.message);
+    console.error("Middleware Error:", error.message, "for path:", pathname);
+    return NextResponse.rewrite(new URL("/500", req.url));
   }
 }
+
+export const config = {
+  matcher: ["/seller/:path*", "/auth/:path*"],
+};

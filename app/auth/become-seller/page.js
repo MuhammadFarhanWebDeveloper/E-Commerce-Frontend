@@ -1,26 +1,31 @@
 "use client";
 import CircularImage from "@/components/General/CircularImage";
+import SubmitButton from "@/components/General/SubmitButton";
 import { becomeSeller } from "@/lib/apiCalls/user";
+import { addUser } from "@/lib/redux/slices/user";
 import { useRouter } from "nextjs-toploader/app";
 
 import React, { useRef, useState } from "react";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
 
 function page() {
   const logoRef = useRef();
-  const router = useRouter()
+  const router = useRouter();
+  const dispetch = useDispatch();
   const [formData, setFormData] = useState({
-    storeName:"",
-    storeDescription:"",
-    businessAddress:"",
-    logo:""
-  })
+    storeName: "",
+    storeDescription: "",
+    businessAddress: "",
+    logo: "",
+  });
   const [logo, setLogo] = useState(null);
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const handleChangeLogo = (e) => {
     const file = e.target.files[0];
     if (file) {
       setLogo(file);
-      setFormData({...formData, logo:URL.createObjectURL(file)})
+      setFormData({ ...formData, logo: URL.createObjectURL(file) });
     }
   };
 
@@ -32,14 +37,26 @@ function page() {
     });
   };
 
-  const handleSubmit = async (e)=>{
-    e.preventDefault()
-    const sellerDetail = await becomeSeller({...formData, logo:logo})
-    if(sellerDetail?.success){
-      router.push("/")
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const sellerDetail = await becomeSeller({ ...formData, logo: logo });
+      if (sellerDetail?.success) {
+        toast.success("You can now sell your products.");
+        dispetch(addUser(sellerDetail.user));
+        router.push("/seller/dashboard");
+      } else {
+        toast.error(
+          sellerDetail.message || "Failed to become a seller. Please try again."
+        );
+      }
+    } catch (error) {
+      toast.error("Failed to become a seller. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    
-  }
+  };
   return (
     <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
@@ -53,7 +70,10 @@ function page() {
               logoRef.current.click();
             }}
           >
-            <CircularImage imageUrl={formData.logo ||  "/noavatar.png"} size={100} />
+            <CircularImage
+              imageUrl={formData.logo || "/noavatar.png"}
+              size={100}
+            />
           </div>
           <label
             className="text-lg font-semibold mx-auto text-center h-fit cursor-pointer"
@@ -125,18 +145,7 @@ function page() {
           />
         </div>
 
-        <button
-          type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg flex justify-center items-center hover:bg-indigo-700 transition duration-300"
-          disabled={isLoading}
-        >
-          {!isLoading ? (
-            "Become Seller"
-          ) : (
-            <img src="/loading.gif" className="mx-auto" />
-          )}
-        </button>
-
+        <SubmitButton isLoading={isLoading} text="Become Seller" />
       </form>
     </div>
   );

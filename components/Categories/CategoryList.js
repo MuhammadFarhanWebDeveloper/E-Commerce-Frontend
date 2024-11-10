@@ -3,12 +3,13 @@ import { useRouter } from "nextjs-toploader/app";
 
 import React, { useRef, useState, useEffect } from "react";
 import { AiOutlineLeft, AiOutlineRight } from "react-icons/ai";
+import { useSelector } from "react-redux";
 
-function CategoryList({ categories }) {
+function CategoryList() {
   const listRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-
+  const categories = useSelector((state) => state.categories?.categories);
   // Scroll to the left
   const handleScrollLeft = () => {
     if (listRef.current) {
@@ -54,8 +55,6 @@ function CategoryList({ categories }) {
     const encodedCategoryName = encodeURIComponent(categoryName);
     router.push(`/products?category=${encodedCategoryName}`);
   };
-
-
   return (
     <div className=" shadow-md w-full p-2 flex justify-between gap-3 items-center max-w-full overflow-hidden">
       {/* Left arrow (conditionally hidden if scrolling left is not possible) */}

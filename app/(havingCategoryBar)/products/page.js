@@ -14,6 +14,7 @@ async function page({searchParams}) {
   const order = searchParams.order || "desc";
   
   const {products} = await getProducts(page, limit, category, search, sortBy, order);
+  
   return (
     <div>
       <ProductsContainer products={products} />

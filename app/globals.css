@@ -34,7 +34,7 @@
 }
 
 .slick-cloned {
-    display: none !important;
+    display: none;
 }
 
 
@@ -45,4 +45,18 @@
 .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+.user-menu {
+    display: none;
+}
+
+.user-menu-button:focus~.user-menu {
+    display: block;
+}
+
+
+
+.slider-container .slick-slide {
+    overflow: visible;
 }

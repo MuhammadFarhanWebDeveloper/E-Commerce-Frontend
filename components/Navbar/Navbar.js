@@ -12,7 +12,7 @@ import {
 import { GoPencil } from "react-icons/go";
 import UpdateUserModal from "../UpdateUserModal";
 import { useDispatch, useSelector } from "react-redux";
-import { addUser } from "@/lib/redux/slices/user";
+import Image from "next/image";
 
 function Navbar({ user: providedUser }) {
   const [isSearchBarOpened, setIsSearchBarOpened] = useState(false);
@@ -24,16 +24,9 @@ function Navbar({ user: providedUser }) {
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const user = useSelector((state) => state.user.user) || providedUser;
-
-  // Only dispatch addUser after the component mounts on the client
-  useEffect(() => {
-    if (providedUser) {
-      dispatch(addUser(providedUser));
-    }
-  }, [dispatch]);
-
+  const user = useSelector((state) => state.user.user);
   const toggleUserUpdateModal = () => {
+    setIsMenuOpened(!isMenuOpened);
     setIsUserUpdateModalOpened(!isUserUpdateModalOpened);
   };
 
@@ -48,7 +41,6 @@ function Navbar({ user: providedUser }) {
 
   return (
     <div className="fixed top-0 bg-slate-300 z-20 w-full px-5">
-      {/* User Update Modal */}
       {isUserUpdateModalOpened && (
         <UpdateUserModal user={user} close={toggleUserUpdateModal} />
       )}
@@ -56,7 +48,7 @@ function Navbar({ user: providedUser }) {
         {/* Logo */}
         <div>
           <Link href="/" className="text-3xl font-bold text-rose-800">
-            Logo
+            <Image src={"/logo.png"} width={110} height={110} alt="Logo" className="" />
           </Link>
         </div>
 
@@ -66,7 +58,10 @@ function Navbar({ user: providedUser }) {
             isSearchBarOpened ? "block" : "hidden md:block"
           }`}
         >
-          <form onSubmit={handleSearchSubmit} className="flex gap-3 p-3 items-center">
+          <form
+            onSubmit={handleSearchSubmit}
+            className="flex gap-3 p-3 items-center"
+          >
             <input
               type="search"
               value={searchQuery}
@@ -111,7 +106,7 @@ function Navbar({ user: providedUser }) {
             isMenuOpened ? "block" : "hidden md:flex"
           }`}
         >
-          {!user?.isSeller && (
+          {user && !user?.isSeller && (
             <Link href="/auth/become-seller" className="text-lg font-semibold">
               Become a seller
             </Link>
@@ -121,38 +116,44 @@ function Navbar({ user: providedUser }) {
               Dashboard
             </Link>
           )}
-          {!providedUser && (
+          {!user && (
             <div className="flex md:gap-4 gap-3 items-center mx-4 flex-col md:flex-row">
-              <Link href="/auth/login" className="w-fit">Login</Link>
-              <Link href="/auth/send-otp" className="w-fit">Sign Up</Link>
+              <Link href="/auth/login" className="w-fit">
+                Login
+              </Link>
+              <Link href="/auth/send-otp" className="w-fit">
+                Sign Up
+              </Link>
             </div>
           )}
         </div>
 
-        {providedUser && (
+        {user && (
           <div className="flex items-center md:gap-4">
-            {/* Shopping Cart Icon */}
-            <div className="relative">
-              <div className="absolute -top-3 -right-3 rounded-full w-5 h-5 bg-red-700 text-white flex items-center justify-center text-xs">
-                0
-              </div>
-              <AiOutlineShoppingCart size={30} />
-            </div>
-
             {/* User Account Menu */}
             <div className="relative px-3">
-              <div
-                onClick={() => setUserControlMenuOpened(!userControlMenuOpened)}
+              <button
                 className="cursor-pointer"
+                onClick={() => {
+                  setIsMenuOpened(!isMenuOpened);
+                }}
               >
                 <CircularImage
-                  imageUrl={user?.profilePicture || providedUser?.profilePicture || "/noavatar.png"}
+                  imageUrl={
+                    user?.profilePicture ||
+                    providedUser?.profilePicture ||
+                    "/noavatar.png"
+                  }
                   size={50}
                 />
-              </div>
-              {userControlMenuOpened && (
+              </button>
+
+              {isMenuOpened && (
                 <ul className="absolute right-0 top-12 bg-gray-600 text-white rounded-lg w-36 py-2 mt-2 z-20">
-                  <li onClick={toggleUserUpdateModal} className="p-2 flex items-center cursor-pointer hover:bg-gray-500">
+                  <li
+                    onClick={toggleUserUpdateModal}
+                    className="p-2 flex items-center cursor-pointer hover:bg-gray-500"
+                  >
                     <GoPencil /> <span className="ml-2">Update Info</span>
                   </li>
                   <li className="p-2 flex items-center cursor-pointer hover:bg-gray-500">

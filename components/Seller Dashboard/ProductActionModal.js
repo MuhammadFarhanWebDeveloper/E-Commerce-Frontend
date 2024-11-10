@@ -5,6 +5,10 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { AiOutlineClose, AiOutlineDelete } from "react-icons/ai";
+import SubmitButton from "../General/SubmitButton";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import { addProduct, updateProduct } from "@/lib/redux/slices/products";
 
 function ProductActionModal({
   close,
@@ -12,15 +16,22 @@ function ProductActionModal({
   type = "upload",
 }) {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [product, setProduct] = useState({
     name: actualProduct.name || "",
     price: actualProduct.price || 0,
-    categoryName: actualProduct.categoryName || "",
+    stock: actualProduct.stock || 1,
+    categoryName: actualProduct?.category?.name || "",
     description: actualProduct.description || "",
     images: actualProduct.images || [],
   });
-  
+  const categories = useSelector((state) => state.categories.categories);
+  console.log(product);
+  console.log(categories);
+  const [oldImages, setOldImages] = useState(actualProduct.images || []);
+
   const changeFieldName = (e) => {
     const { name, value } = e.target;
     setProduct({
@@ -31,28 +42,52 @@ function ProductActionModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (
+      !product.name ||
+      !product.categoryName ||
+      !product.description ||
+      product.price < 1 ||
+      product.stock < 1 ||
+      product.images.length < 1
+    ) {
+      return toast.error("Please provide valid credentials");
+    }
+    setIsLoading(true);
     let data;
     if (type == "upload") {
       data = await createProduct({ ...product, images: selectedFiles });
     } else {
-      data = await editProduct(
-        { ...product, images: selectedFiles },
-        actualProduct?.id
-      );
+      data = await editProduct(actualProduct?.id, {
+        ...product,
+        images: selectedFiles,
+        oldImages,
+      });
     }
     if (data.success) {
-      router.refresh();
+      if (type == "upload") {
+        dispatch(addProduct(data.product));
+      } else {
+        dispatch(updateProduct(data.product));
+      }
+      close();
+      toast.success(
+        `Product ${type == "upload" ? "uploaded" : "edited"} successfully.`
+      );
+    } else {
+      toast.error(data.message || "Something went wrong");
     }
+    setIsLoading(false);
   };
 
   const selectImages = (e) => {
     const files = Array.from(e.target.files);
-    setSelectedFiles(files); // Store the selected files in the state
-
-    const imageUrls = files.map((file) => URL.createObjectURL(file));
+    setSelectedFiles(files);
+    const imageUrls = files.map((file) => ({
+      url: URL.createObjectURL(file),
+    }));
     setProduct((prevProduct) => ({
       ...prevProduct,
-      images: imageUrls,
+      images: [...prevProduct.images, ...imageUrls],
     }));
   };
 
@@ -66,6 +101,11 @@ function ProductActionModal({
     setSelectedFiles((prevFiles) =>
       prevFiles.filter((file) => URL.createObjectURL(file) !== imageParam)
     );
+    if (type !== "upload") {
+      setOldImages((prevFiles) =>
+        prevFiles.filter((file) => file !== imageParam)
+      );
+    }
   };
   return (
     <div
@@ -90,7 +130,7 @@ function ProductActionModal({
           </div>
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="">
+              <div className="sm:col-span-2">
                 <label
                   htmlFor="name"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -101,14 +141,14 @@ function ProductActionModal({
                   type="text"
                   name="name"
                   id="name"
-                  value={product.name}
+                  value={product?.name}
                   onChange={changeFieldName}
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                 />
               </div>
               <div className="">
                 <label
-                  htmlFor="name"
+                  htmlFor="price"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
                   Price
@@ -122,6 +162,22 @@ function ProductActionModal({
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                 />
               </div>
+              <div className="">
+                <label
+                  htmlFor="stock"
+                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                >
+                  Stock
+                </label>
+                <input
+                  type="number"
+                  name="stock"
+                  id="price"
+                  value={product.stock}
+                  onChange={changeFieldName}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                />
+              </div>
               <div className="sm:col-span-2">
                 <label
                   htmlFor="categoryName"
@@ -129,15 +185,24 @@ function ProductActionModal({
                 >
                   Category
                 </label>
-                <input
-                  type="text"
+                <select
                   name="categoryName"
                   value={product.categoryName}
                   onChange={changeFieldName}
                   id="categoryName"
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                />
+                >
+                  <option value="" disabled>
+                    Select a Category
+                  </option>
+                  {categories.map((category, index) => (
+                    <option key={index} value={category?.name}>
+                      {category?.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+
               <div className="sm:col-span-2">
                 <label
                   htmlFor="description"
@@ -173,7 +238,7 @@ function ProductActionModal({
               />
             </div>
             <div className="col-span-2 my-5  flex gap-2 flex-wrap justify-center">
-              {product?.images?.map((image, index) => {
+              {product.images.map((image, index) => {
                 return (
                   <div key={index} className="relative w-[150px]  ">
                     <div
@@ -185,7 +250,7 @@ function ProductActionModal({
                       <AiOutlineDelete size={20} />
                     </div>
                     <Image
-                      src={image.url || "/images/call to action.png"}
+                      src={image?.url}
                       alt={`productImage`}
                       width={150}
                       height={150}
@@ -197,12 +262,10 @@ function ProductActionModal({
             </div>
 
             <div className="flex justify-center my-2 ">
-              <button
-                type="submit"
-                className=" font-medium rounded-lg text-sm px-5 py-2.5 text-center text-black bg-gray-400"
-              >
-                Upload product
-              </button>
+              <SubmitButton
+                isLoading={isLoading}
+                text={type == "upload" ? "Upload" : "Update"}
+              />
             </div>
           </form>
         </div>

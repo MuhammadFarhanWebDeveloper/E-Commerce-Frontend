@@ -1,35 +1,35 @@
 "use client";
 import React, { useRef, useState } from "react";
 import { AiOutlineClose } from "react-icons/ai";
-import CircularImage from "./General/CircularImage";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { addUser } from "@/lib/redux/slices/user";
-import SubmitButton from "./General/SubmitButton";
+import CircularImage from "../General/CircularImage";
+import SubmitButton from "../General/SubmitButton";
 import { toast } from "react-toastify";
 
-function UpdateUserModal({ close, user: userObject }) {
+function UpdateShopInfoModal({ close, storeDetail: shopObject }) {
   const router = useRouter();
   const dispetch = useDispatch();
 
-  const profilePictureRef = useRef();
-  const [user, setUser] = useState(userObject);
-  const [profilePicture, setProfilePicture] = useState("");
+  console.log("In the modal");
+  console.log(shopObject);
+  const storeLogoRef = useRef();
+  const [storeDetail, setStoreDetail] = useState(shopObject);
+  const [storeLogo, setStoreLogo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  console.log(user);
 
-  const changeProfilePicture = (e) => {
+  const changestoreLogo = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfilePicture(file);
-      setUser({ ...user, profilePicture: URL.createObjectURL(file) });
+      setStoreLogo(file);
+      setStoreDetail({ ...storeDetail, storeLogo: URL.createObjectURL(file) });
     }
   };
 
   const handleChangeInput = (e) => {
     const { name, value } = e.target;
-    setUser({
-      ...user,
+    setStoreDetail({
+      ...storeLogo,
       [name]: value,
     });
   };
@@ -39,16 +39,15 @@ function UpdateUserModal({ close, user: userObject }) {
     setIsLoading(true);
 
     const formData = new FormData();
-    formData.append("profilePicture", profilePicture); // Add profile picture
-    formData.append("firstName", user.firstName);
-    formData.append("lastName", user.lastName);
-    formData.append("bio", user.bio);
-    formData.append("address", user.address);
-    formData.append("phoneNumber", user.phoneNumber);
+    formData.append("storeName", storeDetail.storeName);
+    formData.append("storeDescription", storeDetail.storeDescription);
+    formData.append("businessAddress", storeDetail.businessAddress);
+
+    storeLogo && formData.append("logo", storeLogo);
 
     try {
       const request = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-user`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/edit-shop-info`,
         {
           method: "PUT",
           body: formData,
@@ -59,19 +58,14 @@ function UpdateUserModal({ close, user: userObject }) {
       const response = await request.json();
 
       if (response.success) {
-        toast.success("Your informations successfully updated");
-        dispetch(addUser(response.user));
+        toast.success("Your shop informations successfully updated.");
         close();
-      } else {
-        toast.error(response.message || "Sorry something went wrong.");
       }
     } catch (error) {
-      toast.error("Sorry, something went wrong.");
+      toast.error("Something went wrong.Please try again.");
     } finally {
       setIsLoading(false);
     }
-
-    // setError("");
   };
 
   return (
@@ -83,7 +77,7 @@ function UpdateUserModal({ close, user: userObject }) {
         <div className="relative p-4 bg-white overflow-y-auto top-0 h-full rounded-lg shadow dark:bg-gray-800 sm:p-5">
           <div className="flex justify-between items-center  mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600 ">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Update User
+              Edit Store Detail
             </h3>
             <button
               onClick={() => {
@@ -101,83 +95,52 @@ function UpdateUserModal({ close, user: userObject }) {
                 <div
                   className="cursor-pointer rounded-full border-2 border-black"
                   onClick={() => {
-                    profilePictureRef.current.click();
+                    storeLogoRef.current.click();
                   }}
                 >
                   <CircularImage
-                    imageUrl={user?.profilePicture || "/noavatar.png"}
+                    imageUrl={storeDetail?.storeLogo || "/noavatar.png"}
                     size={100}
                   />
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={changeProfilePicture}
-                    name="profilePicture"
-                    id="profilePicture"
-                    ref={profilePictureRef}
+                    onChange={changestoreLogo}
+                    name="storeLogo"
+                    id="storeLogo"
+                    ref={storeLogoRef}
                     hidden
                   />
                 </div>
               </div>
-              <div className="">
+              <div className="sm:col-span-2">
                 <label
-                  htmlFor="firstName"
+                  htmlFor="storeName"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
-                  First Name
+                  Store Name
                 </label>
                 <input
                   type="text"
-                  name="firstName"
-                  id="firstName"
-                  value={user?.firstName || ""}
+                  name="storeName"
+                  id="storeName"
+                  value={storeDetail?.storeName || ""}
                   onChange={handleChangeInput}
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                 />
               </div>
-              <div className="">
-                <label
-                  htmlFor="lastName"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  id="lastName"
-                  value={user?.lastName || ""}
-                  onChange={handleChangeInput}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                />
-              </div>
+
               <div className="sm:col-span-2">
                 <label
-                  htmlFor="phoneNumber"
+                  htmlFor="storeDescription"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
-                  Phone Number
-                </label>
-                <input
-                  type="number"
-                  name="phoneNumber"
-                  id="phoneNumber"
-                  value={user?.phoneNumber}
-                  onChange={handleChangeInput}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label
-                  htmlFor="bio"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Bio
+                  Store Description
                 </label>
                 <textarea
-                  name="bio"
-                  id="bio"
-                  value={user?.bio || ""}
+                  name="storeDescription"
+                  id="storeDescription"
+                  value={storeDetail?.storeDescription || ""}
                   onChange={handleChangeInput}
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                   placeholder=""
@@ -185,15 +148,15 @@ function UpdateUserModal({ close, user: userObject }) {
               </div>
               <div className="sm:col-span-2">
                 <label
-                  htmlFor="address"
+                  htmlFor="businessAddress"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
-                  Address
+                  Business Address
                 </label>
                 <textarea
-                  name="address"
-                  id="address"
-                  value={user?.address || ""}
+                  name="businessAddress"
+                  id="businessAddress"
+                  value={storeDetail?.businessAddress || ""}
                   onChange={handleChangeInput}
                   className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                   placeholder=""
@@ -211,4 +174,4 @@ function UpdateUserModal({ close, user: userObject }) {
   );
 }
 
-export default UpdateUserModal;
+export default UpdateShopInfoModal;

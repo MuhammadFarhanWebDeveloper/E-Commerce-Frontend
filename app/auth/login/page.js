@@ -1,18 +1,22 @@
 "use client";
 
+import SubmitButton from "@/components/General/SubmitButton";
+import { addUser } from "@/lib/redux/slices/user";
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const LoginForm = () => {
   const router = useRouter();
+  const dispetch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
-  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,34 +29,39 @@ const LoginForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Basic frontend validation
+    if (!formData.email || !formData.password) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const request = await fetch(
-        `/api/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-          credentials: "include",
-        }
-      );
+      const request = await fetch(`/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+        credentials: "include",
+      });
       const response = await request.json();
 
       if (response.success) {
-        return router.push("/");
+        toast.success("Welcome back! You've successfully logged in");
+        dispetch(addUser(response.user));
+        router.push("/");
       } else {
-        setError(response.message || "Login failed");
+        toast.error(
+          response.message || "Login failed. Please check your credentials."
+        );
       }
     } catch (error) {
-      console.log(error);
-      setError("Sorry, something went wrong.");
+      console.error(error);
+      toast.error("Sorry, something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
-
-    setError("");
   };
 
   return (
@@ -99,20 +108,7 @@ const LoginForm = () => {
           />
         </div>
 
-        {/* Error Message */}
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-        <button
-          type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg flex justify-center items-center hover:bg-indigo-700 transition duration-300"
-          disabled={isLoading}
-        >
-          {!isLoading ? (
-            "Login"
-          ) : (
-            <img src="/loading.gif" className="mx-auto" />
-          )}
-        </button>
+        <SubmitButton isLoading={isLoading} text="Login" />
 
         <div className="mt-4 text-center">
           <Link

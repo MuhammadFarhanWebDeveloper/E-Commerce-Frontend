@@ -1,20 +1,22 @@
 "use client";
 
-import { useRouter } from 'nextjs-toploader/app';
-
+import SubmitButton from "@/components/General/SubmitButton";
+import { addUser } from "@/lib/redux/slices/user";
+import { useRouter } from "nextjs-toploader/app";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
 
 const UserInfoForm = () => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false)
+  const dispetch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     password: "",
     confirmPassword: "",
   });
-
-  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,43 +26,61 @@ const UserInfoForm = () => {
     });
   };
 
+  const validateFields = () => {
+    if (formData.firstName.length < 4 || formData.firstName.length > 20) {
+      toast.error("First Name must be between 4 to 20 characters.");
+      return false;
+    }
+    if (formData.lastName.length < 4 || formData.lastName.length > 20) {
+      toast.error("Last Name must be between 4 to 20 characters.");
+      return false;
+    }
+    if (formData.password.length < 4) {
+      toast.error("Password must be at least 4 characters long.");
+      return false;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match.");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    if (!validateFields()) return;
 
     try {
-      setIsLoading(true)
-      const request = await fetch(
-        `/api/signup/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            password: formData.password,
-          }),
-          credentials: "include",
-        }
-      );
+      setIsLoading(true);
+      const request = await fetch(`/api/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          password: formData.password,
+        }),
+        credentials: "include",
+      });
       const response = await request.json();
-      console.log(response);
+
       if (response.success) {
-        return router.push("/")
+        toast.success("Registration successful!");
+        dispetch(addUser(response.user));
+        router.push("/");
+      } else {
+        toast.error(
+          response.message || "Failed to register. Please try again."
+        );
       }
     } catch (error) {
-      console.log(error);
-      setError("Sorry, Something went wrong");
-    }finally {
-      setIsLoading(false)
-    }    
-    setError(""); 
+      toast.error("Sorry, something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -84,6 +104,7 @@ const UserInfoForm = () => {
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter your first name"
+            required
           />
         </div>
 
@@ -102,6 +123,7 @@ const UserInfoForm = () => {
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter your last name"
+            required
           />
         </div>
 
@@ -120,10 +142,10 @@ const UserInfoForm = () => {
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter your password"
+            required
           />
         </div>
 
-        {/* Confirm Password */}
         <div className="mb-6">
           <label
             className="block text-gray-700 font-medium mb-2"
@@ -139,23 +161,11 @@ const UserInfoForm = () => {
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Confirm your password"
+            required
           />
         </div>
 
-        {/* Error Message */}
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-        <button
-          type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg flex justify-center items-center hover:bg-indigo-700 transition duration-300"
-          disabled={isLoading}
-        >
-          {!isLoading ? (
-            "Submit Informations"
-          ) : (
-            <img src="/loading.gif" className="mx-auto" />
-          )}
-        </button>
+        <SubmitButton isLoading={isLoading} text="Submit" />
       </form>
     </div>
   );

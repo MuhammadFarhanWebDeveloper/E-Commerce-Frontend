@@ -3,11 +3,10 @@ import { getAllCategories } from "@/lib/apiCalls/category";
 import React from "react";
 
 async function layout({children}) {
-  const categories = await getAllCategories();
-  const { data } = categories;
+
   return (
     <div>
-      <CategoryList categories={data} />
+      <CategoryList  />
       {children}
     </div>
   );

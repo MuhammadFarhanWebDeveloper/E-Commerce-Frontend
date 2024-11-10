@@ -10,6 +10,7 @@ function RecommendedProducts({ products }) {
       <ResponsiveCardCarousel>
         {products?.map((product) => {
           return (
+            
               <ProductCard key={product.id} product={product} />
 
           );

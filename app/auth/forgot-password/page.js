@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "nextjs-toploader/app";
 import { imageConfigDefault } from "next/dist/shared/lib/image-config";
+import SubmitButton from "@/components/General/SubmitButton";
+import { toast } from "react-toastify";
 const ForgotPassword = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,13 +28,15 @@ const ForgotPassword = () => {
       );
       const response = await request.json();
       if (response.success) {
-        setSuccess("Please check your email for the OTP.");
-        setTimeout(() => router.push("/auth/reset-password"), 1500);
+        toast.success("Please check your for OTP.");
+        router.push("/auth/reset-password")
       } else {
-        setError(response.message || "Something went wrong");
+        toast.error(
+          response.message || "Sorry! we couldn't send OTP.Please try again."
+        );
       }
     } catch (error) {
-      setError("Sorry, something went wrong.");
+      toast.error("Sorry! we couldn't send OTP.Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -64,21 +67,7 @@ const ForgotPassword = () => {
           />
         </div>
 
-        {/* Error Message */}
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
-
-        <button
-          type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg flex justify-center items-center hover:bg-indigo-700 transition duration-300"
-          disabled={isLoading}
-        >
-          {!isLoading ? (
-            "Send Reset Token"
-          ) : (
-            <img src="/loading.gif" className="mx-auto" />
-          )}
-        </button>
+        <SubmitButton isLoading={isLoading} text="Send OTP" />
       </form>
     </div>
   );

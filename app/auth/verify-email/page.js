@@ -1,23 +1,23 @@
 "use client";
 
-import { useRouter } from 'nextjs-toploader/app';
+import SubmitButton from "@/components/General/SubmitButton";
+import { useRouter } from "nextjs-toploader/app";
 
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState(new Array(6).fill(""));
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (element, index) => {
-    if (isNaN(element.value)) return; // Only accept numeric input
+    if (isNaN(element.value)) return; 
 
     let newOtp = [...otp];
     newOtp[index] = element.value;
     setOtp(newOtp);
 
-    // Move to the next input box after typing a digit
     if (element.nextSibling && element.value) {
       element.nextSibling.focus();
     }
@@ -34,7 +34,7 @@ const VerifyOtp = () => {
     e.preventDefault();
     const otpCode = otp.join("");
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const request = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/verify-otp`,
         {
@@ -49,14 +49,15 @@ const VerifyOtp = () => {
       const response = await request.json();
 
       if (response.success) {
-        router.push("/auth/user-detail")
+        toast.success("Email verified successfully.");
+        router.push("/auth/user-detail");
+      } else {
+        toast.error(response.message || "Sorry, Something went wrong.");
       }
-      console.log(response);
     } catch (error) {
-      console.log(error);
-      setError("Sorry, Something went wrong");
-    }finally {
-      setIsLoading(false)
+      toast.error("Sorry, Something went wrong.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -84,17 +85,7 @@ const VerifyOtp = () => {
               />
             ))}
           </div>
-          <button
-          type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg flex justify-center items-center hover:bg-indigo-700 transition duration-300"
-          disabled={isLoading}
-        >
-          {!isLoading ? (
-            "Verify Email"
-          ) : (
-            <img src="/loading.gif" className="mx-auto" />
-          )}
-        </button>
+          <SubmitButton isLoading={isLoading} text="Verify" />
         </form>
       </div>
     </div>

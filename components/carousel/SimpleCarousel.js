@@ -37,8 +37,10 @@ function SimpleCarousel({ children }) {
   };
 
   return (
-    <div className="slider-container relative  w-full mx-auto p-4">
-      <Slider {...settings} className="h-full">{children}</Slider>
+    <div className="slider-container relative   mx-auto p-4">
+      <Slider {...settings} className="h-full w-full">
+        {children}
+      </Slider>
     </div>
   );
 }

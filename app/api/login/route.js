@@ -15,29 +15,27 @@ export async function POST(request) {
   );
 
   if (!res.ok) {
-    return Response.json({success:false,  error: "Login failed" }, { status: res.status });
+    return Response.json(
+      { success: false, error: "Login failed" },
+      { status: res.status }
+    );
   }
 
   const data = await res.json();
 
- 
   const setCookieHeader = res.headers.get("set-cookie");
 
-  
   if (setCookieHeader) {
-    
     const authToken = setCookieHeader.split(";")[0].split("=")[1];
 
-    
     const cookieStore = cookies();
     cookieStore.set("authtoken", authToken, {
-      sameSite: "none", 
-      secure:true,
+      sameSite: "none",
+      secure: true,
       path: "/",
-      maxAge: 30 * 24 * 60 * 60, 
+      maxAge: 30 * 24 * 60 * 60,
     });
   }
 
-  
-  return Response.json({ success:true, data });
+  return Response.json({ success: true, user: data.user });
 }

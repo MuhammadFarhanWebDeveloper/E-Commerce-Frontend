@@ -1,19 +1,20 @@
 "use client";
-import { useRouter } from 'nextjs-toploader/app';
+import SubmitButton from "@/components/General/SubmitButton";
+import { useRouter } from "nextjs-toploader/app";
 
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 const SendOtp = () => {
   const [email, setEmail] = useState("");
-  const [error, setError] = useState(null);
-const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const request = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/send-otp`,
         {
@@ -26,15 +27,18 @@ const [isLoading, setIsLoading] = useState(false)
         }
       );
       const response = await request.json();
-      if (response.success ) {
-        router.push("/auth/verify-email")
+      if (response.success) {
+        toast.success("Please check your email for OTP");
+        router.push("/auth/verify-email");
+      } else {
+        toast.error(
+          response.message || "Sorry! something went wrong. Please try again."
+        );
       }
-      console.log(response);
     } catch (error) {
-      setError("Sorry Something went wrong");
-      console.log(error);
+      toast.error("Sorry! something went wrong. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 
@@ -61,17 +65,7 @@ const [isLoading, setIsLoading] = useState(false)
             required
           />
         </div>
-        <button
-          type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg flex justify-center items-center hover:bg-indigo-700 transition duration-300"
-          disabled={isLoading}
-        >
-          {!isLoading ? (
-            "Send OTP"
-          ) : (
-            <img src="/loading.gif" className="mx-auto" />
-          )}
-        </button>
+        <SubmitButton isLoading={isLoading} text="Send" />
       </form>
     </div>
   );

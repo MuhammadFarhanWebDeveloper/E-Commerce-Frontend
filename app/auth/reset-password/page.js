@@ -1,24 +1,23 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useRouter } from 'nextjs-toploader/app';
+import { useRouter } from "nextjs-toploader/app";
+import { toast } from "react-toastify";
+import SubmitButton from "@/components/General/SubmitButton";
 
 const ResetPassword = () => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [formData, setFormData] = useState({
     newPassword: "",
     confirmPassword: "",
   });
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
   const otpRefs = useRef([]);
 
   const handleOtpChange = (e, index) => {
-    const value = e.target.value.replace(/\D/g, ""); // Only allow digits
+    const value = e.target.value.replace(/\D/g, ""); 
     if (value.length === 1) {
       const newOtp = [...otp];
       newOtp[index] = value;
@@ -39,22 +38,30 @@ const ResetPassword = () => {
     });
   };
 
+  const validateForm = () => {
+    const otpValue = otp.join("");
+    if (otpValue.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP.");
+      return false;
+    }
+    if (formData.newPassword.length < 4) {
+      toast.error("Password must be at least 4 characters long.");
+      return false;
+    }
+    if (formData.newPassword !== formData.confirmPassword) {
+      toast.error("Passwords do not match.");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const otpValue = otp.join("");
-    if (otpValue.length !== 6) {
-      setError("Please enter a valid 6-digit OTP.");
-      return;
-    }
-
-    if (formData.newPassword !== formData.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const request = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/reset-password`,
         {
@@ -63,7 +70,7 @@ const ResetPassword = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            otp: otpValue,
+            otp: otp.join(""),
             newPassword: formData.newPassword,
           }),
           credentials: "include",
@@ -71,15 +78,15 @@ const ResetPassword = () => {
       );
       const response = await request.json();
       if (response.success) {
-        setSuccess("Password has been reset successfully.");
+        toast.success("Password has been reset successfully.");
         setTimeout(() => router.push("/auth/login"), 1500);
       } else {
-        setError(response.message || "Failed to reset password.");
+        toast.error(response.message || "Failed to reset password.");
       }
     } catch (error) {
-      setError("Sorry, something went wrong.");
-    }finally {
-      setIsLoading(false)
+      toast.error("Sorry, something went wrong.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -147,21 +154,7 @@ const ResetPassword = () => {
           />
         </div>
 
-        {/* Error and Success Messages */}
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        {success && <p className="text-green-500 text-sm mb-4">{success}</p>}
-
-        <button
-          type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg flex justify-center items-center hover:bg-indigo-700 transition duration-300"
-          disabled={isLoading}
-        >
-          {!isLoading ? (
-            "Reset Password"
-          ) : (
-            <img src="/loading.gif" className="mx-auto" />
-          )}
-        </button>
+        <SubmitButton isLoading={isLoading} text="Reset" />
       </form>
     </div>
   );
