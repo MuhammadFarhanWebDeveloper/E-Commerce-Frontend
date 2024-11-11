@@ -69,8 +69,7 @@ const UserInfoForm = () => {
 
       if (response.success) {
         toast.success("Registration successful!");
-        localStorage.setItem("authtoken", response.authtoken)
-
+        
         dispetch(addUser(response.user));
         router.push("/");
       } else {
