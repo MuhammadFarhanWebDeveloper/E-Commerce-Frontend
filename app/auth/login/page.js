@@ -49,6 +49,7 @@ const LoginForm = () => {
 
       if (response.success) {
         toast.success("Welcome back! You've successfully logged in");
+        localStorage.setItem("authtoken", response.authtoken)
         dispetch(addUser(response.user));
         router.push("/");
       } else {

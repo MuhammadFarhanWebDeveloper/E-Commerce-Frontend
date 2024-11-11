@@ -39,5 +39,5 @@ export async function POST(request) {
     });
   }
 
-  return Response.json({ success: true, user: data.user });
+  return Response.json({ success: true, user: data.user, authtoken: authToken });
 }

@@ -39,7 +39,6 @@ export async function POST(request) {
     const cookieStore = cookies();
     cookieStore.set("authtoken", authToken, {
       sameSite: "none",
-
       secure: true,
       path: "/",
       maxAge: 30 * 24 * 60 * 60,
@@ -48,5 +47,5 @@ export async function POST(request) {
     });
   }
 
-  return Response.json({ success: true, user: data.user });
+  return Response.json({ success: true, user: data.user, authtoken:authToken });
 }
