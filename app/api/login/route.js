@@ -31,8 +31,7 @@ export async function POST(request) {
     const cookieStore = cookies();
     cookieStore.set("authtoken", authToken, {
       sameSite: "none",
-      domain: ".vercel.app",
-
+      
       secure: true,
       path: "/",
       maxAge: 30 * 24 * 60 * 60,
