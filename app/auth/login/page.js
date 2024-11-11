@@ -37,7 +37,7 @@ const LoginForm = () => {
 
     try {
       setIsLoading(true);
-      const request = await fetch(`/api/login`, {
+      const request = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
