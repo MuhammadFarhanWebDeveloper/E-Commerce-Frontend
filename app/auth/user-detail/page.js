@@ -34,6 +34,7 @@ const UserInfoForm = () => {
 
       if (response.success) {
         toast.success("Registration successful!");
+        
         dispetch(addUser(response.user));
         console.log(response)
         router.push("/");

@@ -16,7 +16,20 @@ const LoginForm = () => {
   const router = useRouter();
   const handleSubmit = async (formData) => {
     try {
+<<<<<<< HEAD
       const response = await login(formData);
+=======
+      setIsLoading(true);
+      const request = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+        credentials: "include",
+      });
+      const response = await request.json();
+>>>>>>> 6315581f36472226790c487b399a5275596ba276
 
       if (response.success) {
         toast.success("Welcome back! You've successfully logged in");
