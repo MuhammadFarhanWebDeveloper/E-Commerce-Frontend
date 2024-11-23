@@ -1,75 +1,41 @@
 "use client";
 
+import ActionButton from "@/components/General/ActionButton";
 import SubmitButton from "@/components/General/SubmitButton";
 import { addUser } from "@/lib/redux/slices/user";
+import { register } from "@/lib/server-actions/auth";
 import { useRouter } from "nextjs-toploader/app";
-import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 
 const UserInfoForm = () => {
   const router = useRouter();
   const dispetch = useDispatch();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    password: "",
-    confirmPassword: "",
-  });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
 
-  const validateFields = () => {
-    if (formData.firstName.length < 4 || formData.firstName.length > 20) {
-      toast.error("First Name must be between 4 to 20 characters.");
-      return false;
-    }
-    if (formData.lastName.length < 4 || formData.lastName.length > 20) {
-      toast.error("Last Name must be between 4 to 20 characters.");
-      return false;
-    }
-    if (formData.password.length < 4) {
-      toast.error("Password must be at least 4 characters long.");
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match.");
-      return false;
-    }
-    return true;
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateFields()) return;
-
+  const handleSubmit = async (formData) => {
     try {
-      setIsLoading(true);
-      const request = await fetch(`/api/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          password: formData.password,
-        }),
-        credentials: "include",
-      });
-      const response = await request.json();
+      const { password, confirmPassword, firstName } =
+        Object.fromEntries(formData);
+      if (firstName.length < 4 || firstName.length > 20) {
+        toast.error("First Name must be between 4 to 20 characters.");
+        return ;
+      }
+      if (password.length < 4) {
+        toast.error("Password must be at least 4 characters long.");
+        return ;
+      }
+      if (password !== confirmPassword) {
+        toast.error("Passwords do not match.");
+        return ;
+      }
+      const response = await register(formData);
 
       if (response.success) {
         toast.success("Registration successful!");
         dispetch(addUser(response.user));
+        console.log(response)
         router.push("/");
       } else {
         toast.error(
@@ -77,9 +43,8 @@ const UserInfoForm = () => {
         );
       }
     } catch (error) {
+      console.log(error)
       toast.error("Sorry, something went wrong.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -88,7 +53,7 @@ const UserInfoForm = () => {
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
         User Information
       </h2>
-      <form onSubmit={handleSubmit}>
+      <form action={handleSubmit}>
         <div className="mb-4">
           <label
             className="block text-gray-700 font-medium mb-2"
@@ -100,8 +65,6 @@ const UserInfoForm = () => {
             type="text"
             name="firstName"
             id="firstName"
-            value={formData.firstName}
-            onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter your first name"
             required
@@ -119,11 +82,8 @@ const UserInfoForm = () => {
             type="text"
             name="lastName"
             id="lastName"
-            value={formData.lastName}
-            onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter your last name"
-            required
           />
         </div>
 
@@ -138,8 +98,6 @@ const UserInfoForm = () => {
             type="password"
             name="password"
             id="password"
-            value={formData.password}
-            onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter your password"
             required
@@ -157,15 +115,13 @@ const UserInfoForm = () => {
             type="password"
             name="confirmPassword"
             id="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Confirm your password"
             required
           />
         </div>
 
-        <SubmitButton isLoading={isLoading} text="Submit" />
+        <ActionButton />
       </form>
     </div>
   );

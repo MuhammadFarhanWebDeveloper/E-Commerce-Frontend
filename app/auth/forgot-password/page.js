@@ -15,21 +15,18 @@ const ForgotPassword = () => {
 
     try {
       setIsLoading(true);
-      const request = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/forgot-password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-          credentials: "include",
-        }
-      );
+      const request = await fetch(`/api/auth/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+        credentials: "include",
+      });
       const response = await request.json();
       if (response.success) {
         toast.success("Please check your for OTP.");
-        router.push("/auth/reset-password")
+        router.push("/auth/reset-password");
       } else {
         toast.error(
           response.message || "Sorry! we couldn't send OTP.Please try again."

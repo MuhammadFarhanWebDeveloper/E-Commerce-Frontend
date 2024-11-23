@@ -1,5 +1,4 @@
 import CategoryList from "@/components/Categories/CategoryList";
-import { getAllCategories } from "@/lib/apiCalls/category";
 import React from "react";
 
 async function layout({children}) {

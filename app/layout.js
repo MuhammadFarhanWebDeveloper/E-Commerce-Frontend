@@ -2,12 +2,12 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Navbar from "@/components/Navbar/Navbar";
 import NextTopLoader from "nextjs-toploader";
-import { getUser } from "@/lib/apiCalls/user";
 import { cookies } from "next/headers";
 import StoreProvider from "./StateWrapper";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getAllCategories } from "@/lib/apiCalls/category";
+import { getUser } from "@/lib/data";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,14 +30,8 @@ export const metadata = {
 export default async function RootLayout({ children }) {
   const cookieStore = cookies();
   const token = cookieStore.get("authtoken")?.value;
-  let user = null;
+  let user = token ? await getUser(token) : null;
 
-  if (token) {
-    const request = await getUser(token);
-    if (request.success) {
-      user = request.user;
-    }
-  }
   const categories = await getAllCategories();
   const { data } = categories;
   return (

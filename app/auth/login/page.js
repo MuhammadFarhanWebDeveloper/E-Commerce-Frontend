@@ -1,66 +1,36 @@
 "use client";
 
-import SubmitButton from "@/components/General/SubmitButton";
+import { login } from "@/lib/server-actions/auth";
+import ActionButton from "@/components/General/ActionButton";
 import { addUser } from "@/lib/redux/slices/user";
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
-import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { toast } from "react-toastify";
+
+
 import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 
 const LoginForm = () => {
+  const dispatch = useDispatch();
   const router = useRouter();
-  const dispetch = useDispatch();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Basic frontend validation
-    if (!formData.email || !formData.password) {
-      toast.error("Please fill in all fields.");
-      return;
-    }
-
+  const handleSubmit = async (formData) => {
     try {
-      setIsLoading(true);
-      const request = await fetch(`/api/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-        credentials: "include",
-      });
-      const response = await request.json();
+      const response = await login(formData);
 
       if (response.success) {
         toast.success("Welcome back! You've successfully logged in");
-        dispetch(addUser(response.user));
+        dispatch(addUser(response.user));
         router.push("/");
       } else {
         toast.error(
           response.message || "Login failed. Please check your credentials."
         );
+        console.log(response.message);
       }
     } catch (error) {
-      console.error(error);
+      console.log(error);
       toast.error("Sorry, something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -69,7 +39,7 @@ const LoginForm = () => {
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
         Login
       </h2>
-      <form onSubmit={handleSubmit}>
+      <form action={handleSubmit}>
         <div className="mb-4">
           <label
             className="block text-gray-700 font-medium mb-2"
@@ -81,8 +51,6 @@ const LoginForm = () => {
             type="email"
             name="email"
             id="email"
-            value={formData.email}
-            onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter your email"
             required
@@ -100,15 +68,13 @@ const LoginForm = () => {
             type="password"
             name="password"
             id="password"
-            value={formData.password}
-            onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
             placeholder="Enter your password"
             required
           />
         </div>
 
-        <SubmitButton isLoading={isLoading} text="Login" />
+        <ActionButton text="Login" />
 
         <div className="mt-4 text-center">
           <Link

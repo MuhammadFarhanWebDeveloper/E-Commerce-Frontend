@@ -16,7 +16,7 @@ const SendOtp = () => {
     try {
       setIsLoading(true);
       const request = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/send-otp`,
+        `/api/auth/send-otp`,
         {
           method: "POST",
           body: JSON.stringify({ email }),

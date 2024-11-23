@@ -1,56 +1,78 @@
 import { NextResponse } from "next/server";
-import { getUser } from "./lib/apiCalls/user";
+import { getUser } from "./lib/data";
+import { verifyToken } from "./lib/server-actions/auth";
 
 export async function middleware(req) {
   const pathname = req.nextUrl.pathname;
   const authtoken = req.cookies.get("authtoken")?.value;
 
   try {
-    const user = authtoken ? await getUser(authtoken) : null;
+    const decoded = authtoken ? await verifyToken(authtoken) : null;
+    let userId = decoded?.id ? decoded.id : null;
+    let sellerId = decoded?.sellerId ? decoded.sellerId : null;
 
-    // Create the default response
-    const res = NextResponse.next();
-
-
-
-    // Handle /seller routes
-    if (pathname.startsWith("/seller/dashboard")) {
-      if (!user?.user?.isSeller) {
-        console.log("user is not defined")
-        console.log(user)
-        return NextResponse.rewrite(new URL("/404", req.url));
+    if (pathname.startsWith("/api/auth/update-user")) {
+      if (!userId) {
+        return NextResponse.json({ error: "Un-Authorized" }, { status: 401 });
       }
-      return res;
+
+      // Clone the request headers and add `userId`
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set("userId", userId);
+
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
     }
 
-    // Handle /auth routes
+    if (pathname.startsWith("/api/products")) {
+      if (!sellerId) {
+        return NextResponse.json({ error: "Un-Authorized" }, { status: 401 });
+      }
+      const requestHeaders = new Headers(req.headers);
+      requestHeaders.set("sellerId", sellerId);
+      requestHeaders.set("userId", userId);
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    }
+
+    if (pathname.startsWith("/seller/dashboard")) {
+      if (!sellerId) {
+        return NextResponse.rewrite(new URL("/404", req.url));
+      }
+      return NextResponse.next();
+    }
+
     if (pathname.startsWith("/auth")) {
       const isBecomeSeller = pathname.startsWith("/auth/become-seller");
       const isPasswordReset =
         pathname.startsWith("/auth/forgot-password") ||
         pathname.startsWith("/auth/reset-password");
+      console.log(userId);
+      if (userId) {
+        if (isBecomeSeller && !sellerId) {
+          return NextResponse.next();
+        }
 
-      if (user?.user) {
-        // Allow become-seller for logged-in non-sellers
-        if (isBecomeSeller && !user.user.isSeller) {
-          return res;
-        }
-        // Allow password reset routes
         if (isPasswordReset) {
-          return res;
+          return NextResponse.next();
         }
-        // Redirect other auth routes for logged-in users
+
         return NextResponse.rewrite(new URL("/404", req.url));
       } else {
         if (isBecomeSeller) {
           return NextResponse.rewrite(new URL("/404", req.url));
         }
-        return res;
+        return NextResponse.next();
       }
     }
 
-    // Default response for non-matching routes
-    return res;
+    return NextResponse.next();
   } catch (error) {
     console.error("Middleware Error:", error.message, "for path:", pathname);
     return NextResponse.rewrite(new URL("/500", req.url));
@@ -58,5 +80,5 @@ export async function middleware(req) {
 }
 
 export const config = {
-  matcher: ["/seller/:path*", "/auth/:path*"],
+  matcher: ["/seller/:path*", "/auth/:path*", "/api/:path*"],
 };

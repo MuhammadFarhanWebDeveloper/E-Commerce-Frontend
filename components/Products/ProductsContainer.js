@@ -2,8 +2,7 @@ import React from "react";
 import ProductCard from "./ProductCard";
 
 async function ProductsContainer({ heading = "Latest Products", products }) {
-  console.log("My products")
-  console.log(products)
+
   return (
     <section className="px-5 py-8  md:py-12">
       <h1 className="text-3xl font-bold mb-5">{heading}</h1>

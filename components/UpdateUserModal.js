@@ -48,7 +48,7 @@ function UpdateUserModal({ close, user: userObject }) {
 
     try {
       const request = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/update-user`,
+        `/api/auth/update-user`,
         {
           method: "PUT",
           body: formData,

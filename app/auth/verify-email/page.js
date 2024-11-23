@@ -1,6 +1,8 @@
 "use client";
 
+import ActionButton from "@/components/General/ActionButton";
 import SubmitButton from "@/components/General/SubmitButton";
+import { verifyOTP } from "@/lib/server-actions/auth";
 import { useRouter } from "nextjs-toploader/app";
 
 import { useState } from "react";
@@ -8,11 +10,10 @@ import { toast } from "react-toastify";
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState(new Array(6).fill(""));
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (element, index) => {
-    if (isNaN(element.value)) return; 
+    if (isNaN(element.value)) return;
 
     let newOtp = [...otp];
     newOtp[index] = element.value;
@@ -30,23 +31,11 @@ const VerifyOtp = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (formData) => {
     const otpCode = otp.join("");
     try {
-      setIsLoading(true);
-      const request = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/verify-otp`,
-        {
-          method: "POST",
-          body: JSON.stringify({ otp: otpCode }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        }
-      );
-      const response = await request.json();
+      formData.append("otp", otpCode);
+      const response = await verifyOTP(formData);
 
       if (response.success) {
         toast.success("Email verified successfully.");
@@ -56,9 +45,7 @@ const VerifyOtp = () => {
       }
     } catch (error) {
       toast.error("Sorry, Something went wrong.");
-    } finally {
-      setIsLoading(false);
-    }
+    } 
   };
 
   return (
@@ -71,7 +58,7 @@ const VerifyOtp = () => {
           We've sent an OTP to your email. Please enter the code below to
           verify.
         </div>
-        <form onSubmit={handleSubmit} onPaste={handlePaste}>
+        <form action={handleSubmit} onPaste={handlePaste}>
           <div className="flex justify-center items-center gap-2 mb-6  w-full">
             {otp.map((_, index) => (
               <input
@@ -85,7 +72,7 @@ const VerifyOtp = () => {
               />
             ))}
           </div>
-          <SubmitButton isLoading={isLoading} text="Verify" />
+          <ActionButton text="Verify" />
         </form>
       </div>
     </div>

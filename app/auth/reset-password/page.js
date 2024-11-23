@@ -4,6 +4,8 @@ import { useState, useRef } from "react";
 import { useRouter } from "nextjs-toploader/app";
 import { toast } from "react-toastify";
 import SubmitButton from "@/components/General/SubmitButton";
+import { resetPassword } from "@/lib/server-actions/auth";
+import ActionButton from "@/components/General/ActionButton";
 
 const ResetPassword = () => {
   const router = useRouter();
@@ -17,7 +19,7 @@ const ResetPassword = () => {
   const otpRefs = useRef([]);
 
   const handleOtpChange = (e, index) => {
-    const value = e.target.value.replace(/\D/g, ""); 
+    const value = e.target.value.replace(/\D/g, "");
     if (value.length === 1) {
       const newOtp = [...otp];
       newOtp[index] = value;
@@ -55,38 +57,25 @@ const ResetPassword = () => {
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (form) => {
 
     if (!validateForm()) return;
 
     try {
-      setIsLoading(true);
-      const request = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/reset-password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            otp: otp.join(""),
-            newPassword: formData.newPassword,
-          }),
-          credentials: "include",
-        }
-      );
-      const response = await request.json();
+      const otpValue = otp.join("");
+      form.append("otp", otpValue);
+      form.append("newPassword", formData.newPassword);
+      const response = await resetPassword(form);
       if (response.success) {
         toast.success("Password has been reset successfully.");
-        setTimeout(() => router.push("/auth/login"), 1500);
+        router.push("/auth/login")
       } else {
         toast.error(response.message || "Failed to reset password.");
+        
       }
     } catch (error) {
+      console.log(error)
       toast.error("Sorry, something went wrong.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -95,7 +84,7 @@ const ResetPassword = () => {
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
         Reset Password
       </h2>
-      <form onSubmit={handleSubmit}>
+      <form action={handleSubmit}>
         {/* OTP Input */}
         <div className="mb-4">
           <label className="block text-gray-700 font-medium mb-2">OTP</label>
@@ -154,7 +143,7 @@ const ResetPassword = () => {
           />
         </div>
 
-        <SubmitButton isLoading={isLoading} text="Reset" />
+        <ActionButton text= "Reset" />
       </form>
     </div>
   );
